@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+
+logging:
+  level:
+    web: DEBUG
+    security: DEBUG
+    org:
+      springframework:
+        security: DEBUG
+###
+#security:
+#  oauth2:
+#    resource:
+#      id: RESTFul
+#      service-id: resource
