@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>tw.elliot</groupId>
 		<artifactId>springoauth2</artifactId>
-		<relativePath>..</relativePath>
+		<relativePath>../pom.xml</relativePath>
 		<version>${global.version}</version>
 	</parent>
 	<groupId>tw.elliot</groupId>
@@ -78,10 +78,15 @@
 	</dependencies>
 
 	<build>
+		<finalName>01authserver</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

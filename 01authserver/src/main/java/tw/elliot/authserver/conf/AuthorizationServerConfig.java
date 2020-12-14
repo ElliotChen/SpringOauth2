@@ -23,8 +23,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired
 	private TokenStore tokenStore;
 
+	/*
 	@Autowired
 	private AccessTokenConverter accessTokenConverter;
+	 */
 
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -41,7 +43,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 
 		endpoints
-				.accessTokenConverter(accessTokenConverter)
+				//.accessTokenConverter(accessTokenConverter)
 				.authenticationManager(authenticationManager)
 				.tokenStore(tokenStore);
 	}

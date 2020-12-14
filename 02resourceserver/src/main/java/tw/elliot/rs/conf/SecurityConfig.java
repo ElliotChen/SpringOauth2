@@ -38,14 +38,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return super.authenticationManagerBean();
 	}
 
-	/*
+	/**/
 	@Bean
 	public TokenStore tokenStore() {
 		RedisTokenStore redis = new RedisTokenStore(connectionFactory);
 		return redis;
 	}
-	 */
-
+	/**/
+	/*
+	// For JWT
 	@Bean
 	public TokenStore tokenStore() {
 		return new JwtTokenStore(accessTokenConverter());
@@ -57,6 +58,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		converter.setSigningKey("123");
 		return converter;
 	}
+	 */
 
 	@Bean
 	@Primary

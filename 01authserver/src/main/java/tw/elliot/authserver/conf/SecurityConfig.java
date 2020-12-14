@@ -37,7 +37,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public AuthenticationManager authenticationManagerBean() throws Exception {
 		return super.authenticationManagerBean();
 	}
-
+	/*
 	@Bean
 	public TokenStore tokenStore() {
 		return new JwtTokenStore(accessTokenConverter()); // For JWT. Use in-memory, jdbc, or other if not JWT
@@ -50,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		converter.setSigningKey("123"); // symmetric key
 		return converter;
 	}
-
+	*/
 	// Token services. Needed for JWT
 	@Bean
 	@Primary
@@ -60,12 +60,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return defaultTokenServices;
 	}
 
-	/*
+	/**/
 	@Bean
 	public TokenStore tokenStore() {
 		RedisTokenStore redis = new RedisTokenStore(connectionFactory);
 		return redis;
 	}
-	 */
+	/**/
 
 }

@@ -10,11 +10,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>13</java.version>
+		<java.version>1.8</java.version>
 
 		<global.version>1.0-SNAPSHOT</global.version>
-		<maven.compiler.source>13</maven.compiler.source>
-		<maven.compiler.target>13</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 
 		<spring.version>5.2.5.RELEASE</spring.version>
 		<spring.security.version>5.3.0.RELEASE</spring.security.version>
@@ -26,6 +26,7 @@
 		<jetty.version>9.4.11.v20180605</jetty.version>
 		<micrometer.version>1.3.3</micrometer.version>
 		<reactor.version>Dysprosium-SR1</reactor.version>
+		<docker.image.prefix>k8s</docker.image.prefix>
 
 		<plug.compiler.version>3.8.1</plug.compiler.version>
 		<plug.clean.version>3.1.0</plug.clean.version>
@@ -277,6 +278,11 @@
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
 					<version>${spring.boot.version}</version>
+					<configuration>
+						<additionalProperties>
+							<activeProfile>${activeProfile}</activeProfile>
+						</additionalProperties>
+					</configuration>
 					<executions>
 						<execution>
 							<goals>
@@ -285,8 +291,47 @@
 						</execution>
 					</executions>
 				</plugin>
+				<plugin>
+					<groupId>com.spotify</groupId>
+					<artifactId>dockerfile-maven-plugin</artifactId>
+					<version>1.4.13</version>
+					<executions>
+						<execution>
+							<id>default</id>
+							<goals>
+								<goal>build</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<contextDirectory>${project.basedir}</contextDirectory>
+						<repository>${docker.image.prefix}/${project.artifactId}</repository>
+						<tag>${project.version}</tag>
+						<verbose>true</verbose>
+						<buildArgs>
+							<JAR_FILE>target/${project.build.finalName}.jar</JAR_FILE>
+						</buildArgs>
+					</configuration>
+				</plugin>
+
 			</plugins>
 		</pluginManagement>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>application-*.yml</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>application.yml</include>
+					<include>application-${activeProfile}.yml</include>
+				</includes>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 	</build>
 
 	<reporting>
@@ -313,5 +358,19 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 		</profile>
+		<profile>
+			<id>docker</id>
+			<properties>
+				<activeProfile>docker</activeProfile>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
+		</profile>
+		<profile>
+			<id>dev</id>
+			<properties>
+				<activeProfile>dev</activeProfile>
+			</properties>
+		</profile>
 	</profiles>
+
 </project>
