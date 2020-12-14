@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+  oauthserver:
+    image: k8s/01authserver:1.0-SNAPSHOT
+    ports:
+      - 8081:8081
+  resourceserver:
+    image: k8s/02resourceserver:1.0-SNAPSHOT
+    ports:
+      - 8080:8080
+  redis:
+    image: redis:6-alpine
+    ports:
+      - 6379:6379
+      
