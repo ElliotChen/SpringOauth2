@@ -16,7 +16,7 @@ spec:
         app: resourceserver
     spec:
       containers:
-      - image: k8s/02resourceserver:1.0-SNAPSHOT
+      - image: <PARAM_REGISTRY_IMAGE>
         imagePullPolicy: ""
         name: resourceserver
         env:

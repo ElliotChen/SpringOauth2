@@ -16,7 +16,7 @@ spec:
         app: oauthserver
     spec:
       containers:
-      - image: k8s/01authserver:1.0-SNAPSHOT
+      - image: <PARAM_REGISTRY_IMAGE>
         env:
           # Define the environment variable
           - name: REDIS_SERVICE_HOST # Notice that the case is different here
