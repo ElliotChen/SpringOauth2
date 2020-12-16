@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: oauthserver
+  name: oauthserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauthserver
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: oauthserver
+    spec:
+      containers:
+      - image: k8s/01authserver:1.0-SNAPSHOT
+        env:
+          # Define the environment variable
+          - name: REDIS_SERVICE_HOST # Notice that the case is different here
+            # from the key name in the ConfigMap.
+            valueFrom:
+              configMapKeyRef:
+                name: k8s-configmap     # The ConfigMap this value comes from.
+                key: redis_server_host    # The key to fetch.
+          - name: REDIS_SERVICE_PORT # Notice that the case is different here
+            # from the key name in the ConfigMap.
+            valueFrom:
+              configMapKeyRef:
+                name: k8s-configmap     # The ConfigMap this value comes from.
+                key: redis_server_port    # The key to fetch.
+        imagePullPolicy: ""
+        name: oauthserver
+        ports:
+        - containerPort: 8080
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

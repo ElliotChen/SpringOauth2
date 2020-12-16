@@ -1,0 +1,45 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: spring-oauth-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: spring-oauth
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - spring-oauth-gateway
+  http:
+  - name: "oauth-routes"
+    match:
+    - uri:
+        prefix: "/oauth/token"
+    route:
+    - destination:
+        host: oauthserver
+        port:
+          number: 8080
+  - name: "resource-routes"
+    match:
+    - uri:
+        exact: "/whoami"
+    - uri:
+        exact: "/whoareu"
+    route:
+    - destination:
+        host: resourceserver
+        port:
+          number: 8080

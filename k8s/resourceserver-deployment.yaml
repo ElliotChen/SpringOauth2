@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: resourceserver
+  name: resourceserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resourceserver
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: resourceserver
+    spec:
+      containers:
+      - image: k8s/02resourceserver:1.0-SNAPSHOT
+        imagePullPolicy: ""
+        name: resourceserver
+        env:
+          # Define the environment variable
+          - name: REDIS_SERVICE_HOST # Notice that the case is different here
+            # from the key name in the ConfigMap.
+            valueFrom:
+              configMapKeyRef:
+                name: k8s-configmap     # The ConfigMap this value comes from.
+                key: redis_server_host    # The key to fetch.
+          - name: REDIS_SERVICE_PORT # Notice that the case is different here
+            # from the key name in the ConfigMap.
+            valueFrom:
+              configMapKeyRef:
+                name: k8s-configmap     # The ConfigMap this value comes from.
+                key: redis_server_port    # The key to fetch.
+          - name: GREETING_WORDS  # Notice that the case is different here
+            # from the key name in the ConfigMap.
+            valueFrom:
+              configMapKeyRef:
+                name: k8s-configmap     # The ConfigMap this value comes from.
+                key: greeting_words    # The key to fetch.
+        ports:
+        - containerPort: 8080
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

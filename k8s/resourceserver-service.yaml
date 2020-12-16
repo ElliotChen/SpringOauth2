@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: resourceserver
+  name: resourceserver
+spec:
+  ports:
+  - name: http-resourceserver
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: resourceserver
+status:
+  loadBalancer: {}
