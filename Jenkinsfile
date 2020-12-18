@@ -11,7 +11,7 @@ pipeline {
         }
         stage('Package') {
             steps {
-                sh 'mvn package -P docker'
+                sh 'mvn package'
             }
         }
         stage('Push') {
