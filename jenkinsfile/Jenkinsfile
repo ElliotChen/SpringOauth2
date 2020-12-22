@@ -34,12 +34,9 @@ pipeline {
                      inputText = readFile "./k8s/resourceserver-deployment.yaml"
                      inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${MINIKUBE_REGISTRY}/02resourceserver:${BUILD_NUMBER}")
                      writeFile file: "./k8s/resourceserver-deployment.yaml", text: inputText
-
                 }
-                withEnv(['docker=/usr/local/bin/docker']) {
-                    sh 'curl -X PUT ${MINIKUBE_API_SERVER}/apis/apps/v1/namespaces/default/deployments/oauthserver --header "Authorization: Bearer ${MINIKUBE_TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/oauthserver-deployment.yaml" --insecure'
-                    sh 'curl -X PUT ${MINIKUBE_API_SERVER}/apis/apps/v1/namespaces/default/deployments/resourceserver --header "Authorization: Bearer ${MINIKUBE_TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/resourceserver-deployment.yaml" --insecure'
-                }
+                sh 'curl -X PUT ${MINIKUBE_API_SERVER}/apis/apps/v1/namespaces/default/deployments/oauthserver --header "Authorization: Bearer ${MINIKUBE_TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/oauthserver-deployment.yaml" --insecure'
+                sh 'curl -X PUT ${MINIKUBE_API_SERVER}/apis/apps/v1/namespaces/default/deployments/resourceserver --header "Authorization: Bearer ${MINIKUBE_TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/resourceserver-deployment.yaml" --insecure'
             }
         }
     }
