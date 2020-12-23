@@ -34,17 +34,17 @@ pipeline {
                 }
             }
         }
-        stage('Deploy') {
-            stage('Deploy configmap and service') {
-                steps {
-                    withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
-                        sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/configmaps --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/configmap.yaml" --insecure'
-                        sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/oauthserver-service.yaml" --insecure'
-                        sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/resourceserver-service.yaml" --insecure'
-                        sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/redis-service.yaml" --insecure'
-                    }
+        stage('Deploy configmap and service') {
+            steps {
+                withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/configmaps --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/configmap.yaml" --insecure'
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/oauthserver-service.yaml" --insecure'
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/resourceserver-service.yaml" --insecure'
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/redis-service.yaml" --insecure'
                 }
             }
+        }
+        stage('Deploy deployment') {
             parallel {
                 stage('Deploy redis deployment') {
                     steps {
