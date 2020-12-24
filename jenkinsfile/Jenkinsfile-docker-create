@@ -13,8 +13,8 @@ pipeline {
         }
         stage('Login Registry') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'DIGITAL_OCEAN', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh 'docker login -u ${USERNAME} -p ${PASSWORD} ${REGISTRY_URL}'
+                withCredentials([string(credentialsId: 'DIGITAL_OCEAN', variable: 'TOKEN')]) {
+                    sh 'docker login -u ${TOKEN} -p ${TOKEN} ${REGISTRY_URL}'
                 }
             }
         }
