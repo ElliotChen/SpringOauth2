@@ -11,18 +11,25 @@ pipeline {
                 sh 'mvn package'
             }
         }
+        stage('Login Registry') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'DIGITAL_OCEAN', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'docker login -u ${USERNAME} -p ${PASSWORD} ${REGISTRY_URL}'
+                }
+            }
+        }
         stage('Push') {
             parallel {
                 stage('Push oauthserver') {
                     steps {
-                        sh 'docker image tag k8s/01authserver:1.0-SNAPSHOT ${K8S_REGISTRY}/01authserver:${BUILD_NUMBER}'
-                        sh 'docker push ${K8S_REGISTRY}/01authserver:${BUILD_NUMBER}'
+                        sh 'docker image tag k8s/01authserver:1.0-SNAPSHOT ${REGISTRY_URL}/${REGISTRY_NAME}/01authserver:${BUILD_NUMBER}'
+                        sh 'docker push ${REGISTRY_URL}/${REGISTRY_NAME}/01authserver:${BUILD_NUMBER}'
                     }
                 }
                 stage('Push resourceserver') {
                     steps {
-                        sh 'docker image tag k8s/02resourceserver:1.0-SNAPSHOT ${K8S_REGISTRY}/02resourceserver:${BUILD_NUMBER}'
-                        sh 'docker push ${K8S_REGISTRY}/02resourceserver:${BUILD_NUMBER}'
+                        sh 'docker image tag k8s/02resourceserver:1.0-SNAPSHOT ${REGISTRY_URL}/${REGISTRY_NAME}/02resourceserver:${BUILD_NUMBER}'
+                        sh 'docker push ${REGISTRY_URL}/${REGISTRY_NAME}/02resourceserver:${BUILD_NUMBER}'
                     }
                 }
             }
@@ -33,7 +40,7 @@ pipeline {
                     steps {
                         script {
                              def inputText = readFile "./k8s/oauthserver-deployment.yaml"
-                             inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${K8S_REGISTRY}/01authserver:${BUILD_NUMBER}")
+                             inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${REGISTRY_URL}/${REGISTRY_NAME}/01authserver:${BUILD_NUMBER}")
                              writeFile file: "./k8s/oauthserver-deployment.yaml", text: inputText
                         }
                         withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
@@ -45,7 +52,7 @@ pipeline {
                     steps {
                         script {
                              def inputText = readFile "./k8s/resourceserver-deployment.yaml"
-                             inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${K8S_REGISTRY}/02resourceserver:${BUILD_NUMBER}")
+                             inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${REGISTRY_URL}/${REGISTRY_NAME}/02resourceserver:${BUILD_NUMBER}")
                              writeFile file: "./k8s/resourceserver-deployment.yaml", text: inputText
                         }
                         withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
