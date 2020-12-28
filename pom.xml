@@ -43,8 +43,6 @@
 	<modules>
 		<module>01authserver</module>
 		<module>02resourceserver</module>
-		<module>03client</module>
-		<module>04seresouceserver</module>
 	</modules>
 
 	<dependencyManagement>
@@ -354,9 +352,6 @@
 			<properties>
 				<maven.test.skip>true</maven.test.skip>
 			</properties>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
 		</profile>
 		<profile>
 			<id>docker</id>
@@ -370,6 +365,16 @@
 			<properties>
 				<activeProfile>dev</activeProfile>
 			</properties>
+		</profile>
+		<profile>
+			<id>k8s</id>
+			<properties>
+				<activeProfile>k8s</activeProfile>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
 		</profile>
 	</profiles>
 

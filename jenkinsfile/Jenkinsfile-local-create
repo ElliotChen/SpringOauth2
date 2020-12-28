@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven3.6.3'
+    }
+    stages {
+        stage('Clean') {
+            steps {
+                sh 'mvn clean'
+            }
+        }
+        stage('Package') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+        stage('Push') {
+            parallel {
+                stage('Push oauthserver') {
+                    steps {
+                       withEnv(['docker=/usr/local/bin/docker']) {
+                            sh '$docker image tag k8s/01authserver:1.0-SNAPSHOT ${REGISTRY_URL}/01authserver:${BUILD_NUMBER}'
+                            sh '$docker push ${REGISTRY_URL}/01authserver:${BUILD_NUMBER}'
+                        }
+                    }
+                }
+                stage('Push resourceserver') {
+                    steps {
+                       withEnv(['docker=/usr/local/bin/docker']) {
+                            sh '$docker image tag k8s/02resourceserver:1.0-SNAPSHOT ${REGISTRY_URL}/02resourceserver:${BUILD_NUMBER}'
+                            sh '$docker push ${REGISTRY_URL}/02resourceserver:${BUILD_NUMBER}'
+                        }
+                    }
+                }
+            }
+        }
+        stage('Deploy configmap and service') {
+            steps {
+                withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/configmaps --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/configmap.yaml" --insecure'
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/oauthserver-service.yaml" --insecure'
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/resourceserver-service.yaml" --insecure'
+                    sh 'curl -X POST ${K8S_API_SERVER}/api/v1/namespaces/default/services --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/redis-service.yaml" --insecure'
+                }
+            }
+        }
+        stage('Deploy deployment') {
+            parallel {
+                stage('Deploy redis deployment') {
+                    steps {
+                        withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
+                            sh 'curl -X POST ${K8S_API_SERVER}/apis/apps/v1/namespaces/default/deployments --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/redis-deployment.yaml" --insecure'
+                        }
+                    }
+                }
+                stage('Deploy oauthserver deployment') {
+                    steps {
+                        script {
+                             def inputText = readFile "./k8s/oauthserver-deployment.yaml"
+                             inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${REGISTRY_URL}/01authserver:${BUILD_NUMBER}")
+                             writeFile file: "./k8s/oauthserver-deployment.yaml", text: inputText
+                        }
+                        withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
+                            sh 'curl -X POST ${K8S_API_SERVER}/apis/apps/v1/namespaces/default/deployments --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/oauthserver-deployment.yaml" --insecure'
+                        }
+                    }
+                }
+                stage('Deploy resourceserver deployment') {
+                    steps {
+                        script {
+                             def inputText = readFile "./k8s/resourceserver-deployment.yaml"
+                             inputText = inputText.replaceAll("<PARAM_REGISTRY_IMAGE>", "${REGISTRY_URL}/02resourceserver:${BUILD_NUMBER}")
+                             writeFile file: "./k8s/resourceserver-deployment.yaml", text: inputText
+                        }
+                        withCredentials([string(credentialsId: 'K8S_TOKEN', variable: 'TOKEN')]) {
+                            sh 'curl -X POST ${K8S_API_SERVER}/apis/apps/v1/namespaces/default/deployments --header "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/yaml" --data-binary @"k8s/resourceserver-deployment.yaml" --insecure'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

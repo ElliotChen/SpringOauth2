@@ -1,0 +1,6 @@
+{
+  "storage-driver": "vfs",
+  "insecure-registries": [
+    "minikube:5000"
+  ]
+}

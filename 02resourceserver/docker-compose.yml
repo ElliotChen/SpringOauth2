@@ -4,7 +4,7 @@ services:
   oauthserver:
     image: k8s/01authserver:1.0-SNAPSHOT
     ports:
-      - 8081:8081
+      - 8081:8080
   resourceserver:
     image: k8s/02resourceserver:1.0-SNAPSHOT
     ports:

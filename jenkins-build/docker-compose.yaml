@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  jenkins:
+    image: jenkins:4E
+    privileged: true
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - /換成你的路徑/jenkins_home:/var/jenkins_home
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+

@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  redis:
+    host: ${REDIS_SERVICE_HOST:redis}
+    port: ${REDIS_SERVICE_PORT:6379}
+
+logging:
+  level:
+    web: DEBUG
+    security: DEBUG
+    org:
+      springframework:
+        security: DEBUG
