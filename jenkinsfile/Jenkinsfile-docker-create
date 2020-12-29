@@ -22,12 +22,12 @@ pipeline {
             parallel {
                 stage('oauthserver') {
                     steps {
-                        sh 'buildah bud --build-arg JAR_FILE=./01authserver/target/01authserver.jar -t ${K8S_REGISTRY}/01authserver:${BUILD_NUMBER} . '
+                        sh 'buildah bud --build-arg JAR_FILE=./01authserver/target/01authserver.jar -t ${REGISTRY_URL}/01authserver:${BUILD_NUMBER} . '
                     }
                 }
                 stage('resourceserver') {
                     steps {
-                        sh 'buildah bud --build-arg JAR_FILE=./02resourceserver/target/02resourceserver.jar -t ${K8S_REGISTRY}/02resourceserver:${BUILD_NUMBER} . '
+                        sh 'buildah bud --build-arg JAR_FILE=./02resourceserver/target/02resourceserver.jar -t ${REGISTRY_URL}/02resourceserver:${BUILD_NUMBER} . '
                     }
                 }
             }
