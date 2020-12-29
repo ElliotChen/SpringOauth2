@@ -14,7 +14,21 @@ pipeline {
         stage('Login Registry') {
             steps {
                 withCredentials([string(credentialsId: 'DIGITAL_OCEAN', variable: 'TOKEN')]) {
-                    sh 'docker login -u ${TOKEN} -p ${TOKEN} ${REGISTRY_URL}'
+                    sh 'buildah login -u ${TOKEN} -p ${TOKEN} ${REGISTRY_URL}'
+                }
+            }
+        }
+        stage('Build images') {
+            parallel {
+                stage('oauthserver') {
+                    steps {
+                        sh 'buildah bud --build-arg JAR_FILE=./01authserver/target/01authserver.jar -t ${K8S_REGISTRY}/01authserver:${BUILD_NUMBER} . '
+                    }
+                }
+                stage('resourceserver') {
+                    steps {
+                        sh 'buildah bud --build-arg JAR_FILE=./02resourceserver/target/02resourceserver.jar -t ${K8S_REGISTRY}/02resourceserver:${BUILD_NUMBER} . '
+                    }
                 }
             }
         }
@@ -22,14 +36,12 @@ pipeline {
             parallel {
                 stage('Push oauthserver') {
                     steps {
-                        sh 'docker image tag k8s/01authserver:1.0-SNAPSHOT ${REGISTRY_URL}/${REGISTRY_NAME}/01authserver:${BUILD_NUMBER}'
-                        sh 'docker push ${REGISTRY_URL}/${REGISTRY_NAME}/01authserver:${BUILD_NUMBER}'
+                        sh 'buildah push ${REGISTRY_URL}/${REGISTRY_NAME}/01authserver:${BUILD_NUMBER}'
                     }
                 }
                 stage('Push resourceserver') {
                     steps {
-                        sh 'docker image tag k8s/02resourceserver:1.0-SNAPSHOT ${REGISTRY_URL}/${REGISTRY_NAME}/02resourceserver:${BUILD_NUMBER}'
-                        sh 'docker push ${REGISTRY_URL}/${REGISTRY_NAME}/02resourceserver:${BUILD_NUMBER}'
+                        sh 'buildah push ${REGISTRY_URL}/${REGISTRY_NAME}/02resourceserver:${BUILD_NUMBER}'
                     }
                 }
             }
