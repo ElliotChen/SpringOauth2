@@ -2,6 +2,7 @@ package tw.elliot.authserver.conf;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -11,9 +12,10 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
+@Profile("jwt")
 @Configuration
 @EnableAuthorizationServer
-public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 	private static final String CLIENT_ID = "app";
 	private static final String CLIENT_SECRET = "{noop}654321";
 	private static final String RESOURCE_ID = "RESTFul";
@@ -23,10 +25,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired
 	private TokenStore tokenStore;
 
-	/*
 	@Autowired
 	private AccessTokenConverter accessTokenConverter;
-	 */
+
 
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -43,7 +44,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 
 		endpoints
-				//.accessTokenConverter(accessTokenConverter)
+				.accessTokenConverter(accessTokenConverter)
 				.authenticationManager(authenticationManager)
 				.tokenStore(tokenStore);
 	}

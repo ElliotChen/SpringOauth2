@@ -1,12 +1,13 @@
-package tw.elliot.authserver.conf;
+package tw.elliot.rs.conf;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.BeanIds;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,8 +18,10 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
-@Configuration
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@Profile("redis")
+@EnableWebSecurity
+public class RedisSecurityConfig extends WebSecurityConfigurerAdapter {
+
 
 	@Autowired
 	private RedisConnectionFactory connectionFactory;
@@ -37,21 +40,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public AuthenticationManager authenticationManagerBean() throws Exception {
 		return super.authenticationManagerBean();
 	}
-	/*
+
+
 	@Bean
 	public TokenStore tokenStore() {
-		return new JwtTokenStore(accessTokenConverter()); // For JWT. Use in-memory, jdbc, or other if not JWT
+		RedisTokenStore redis = new RedisTokenStore(connectionFactory);
+		return redis;
 	}
 
-	// Token converter. Needed for JWT
-	@Bean
-	public JwtAccessTokenConverter accessTokenConverter() {
-		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-		converter.setSigningKey("123"); // symmetric key
-		return converter;
-	}
-	*/
-	// Token services. Needed for JWT
 	@Bean
 	@Primary
 	public DefaultTokenServices tokenServices() {
@@ -59,13 +55,4 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		defaultTokenServices.setTokenStore(tokenStore());
 		return defaultTokenServices;
 	}
-
-	/**/
-	@Bean
-	public TokenStore tokenStore() {
-		RedisTokenStore redis = new RedisTokenStore(connectionFactory);
-		return redis;
-	}
-	/**/
-
 }
