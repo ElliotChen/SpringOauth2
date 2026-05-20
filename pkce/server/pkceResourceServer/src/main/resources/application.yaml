@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: "pkceResourceServer"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://local.pkce.oauth:9000"
+
+server:
+  port: 8081
+
+logging:
+  level:
+    org.springframework.security: INFO

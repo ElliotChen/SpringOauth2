@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>PKCE Demo</title>
+</head>
+<body>
+<h1>PKCE Demo</h1>
+<p>Logged in as: <strong th:text="${name}">anonymous</strong></p>
+<ul>
+  <li><a th:href="@{/me}">View /me (JWT claims)</a></li>
+  <li><a th:href="@{/update-parameter}">Call UpdateParameter</a></li>
+</ul>
+<form th:action="@{/logout}" method="post">
+  <button type="submit">Logout</button>
+</form>
+</body>
+</html>

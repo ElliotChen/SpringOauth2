@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: "oauthserver"
+  security:
+    user:
+      name: "admin"
+      password: "admin"
+      roles:
+        - "ADMIN"
+    oauth2:
+      authorizationserver:
+        client:
+          admin-client:
+            registration:
+              client-id: "admin-client"
+              client-secret: "{noop}admin-secret"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "client_credentials"
+              scopes:
+                - "admin"
+            token:
+              access-token-time-to-live: "30m"
+              access-token-format: "self-contained"
+          member-client:
+            registration:
+              client-id: "member-client"
+              client-secret: "{noop}member-secret"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "client_credentials"
+              scopes:
+                - "member"
+            token:
+              access-token-time-to-live: "30m"
+              access-token-format: "self-contained"
+
+server:
+  port: 9000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.security: INFO

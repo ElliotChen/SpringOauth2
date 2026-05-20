@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>/me</title>
+</head>
+<body>
+<h1>/me — JWT claims relayed from pkceResourceServer</h1>
+<table border="1" cellpadding="6">
+  <thead>
+  <tr><th>Field</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+  <tr th:each="entry : ${body}">
+    <td th:text="${entry.key}"></td>
+    <td th:text="${entry.value}"></td>
+  </tr>
+  </tbody>
+</table>
+<p><a th:href="@{/}">Back</a></p>
+</body>
+</html>

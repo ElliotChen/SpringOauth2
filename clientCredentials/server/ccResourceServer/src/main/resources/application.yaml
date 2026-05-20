@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: "resourceServer"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://localhost:9000"
+
+server:
+  port: 8081
+
+logging:
+  level:
+    org.springframework.security: INFO

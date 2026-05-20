@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: "pkceResourceClient"
+  security:
+    oauth2:
+      client:
+        registration:
+          pkce-client:
+            provider: pkce-oauth
+            client-id: pkce-client
+            client-authentication-method: none
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, profile, read
+        provider:
+          pkce-oauth:
+            issuer-uri: http://local.pkce.oauth:9000
+
+server:
+  port: 8080
+
+app:
+  resource-server:
+    base-url: "http://local.pkce.resource:8081"
+
+logging:
+  level:
+    org.springframework.security: INFO
+#    org.springframework.web.client: DEBUG
+#    org.springframework.security.web.authentication: TRACE
+#    org.springframework.security.oauth2.client.web: TRACE

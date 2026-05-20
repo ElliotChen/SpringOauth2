@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>UpdateParameter</title>
+</head>
+<body>
+<h1>Call /sEQI/Param/UpdateParameter</h1>
+<form th:action="@{/update-parameter}" method="post">
+  <label>Param_Type: <input type="text" name="paramType" value="01"/></label>
+  <label>Version: <input type="text" name="version" value="1.0"/></label>
+  <button type="submit">Send</button>
+</form>
+<div th:if="${result}">
+  <h2>Result</h2>
+  <table border="1" cellpadding="6">
+    <tr th:each="entry : ${result}">
+      <td th:text="${entry.key}"></td>
+      <td th:text="${entry.value}"></td>
+    </tr>
+  </table>
+</div>
+<p><a th:href="@{/}">Back</a></p>
+</body>
+</html>

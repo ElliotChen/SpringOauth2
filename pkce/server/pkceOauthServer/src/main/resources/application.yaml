@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: "pkceOauthServer"
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          pkce-client:
+            registration:
+              client-id: "pkce-client"
+              client-authentication-methods:
+                - "none"
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+              redirect-uris:
+                - "http://local.pkce.client:8080/login/oauth2/code/pkce-client"
+              scopes:
+                - "openid"
+                - "profile"
+                - "read"
+            require-authorization-consent: false
+            require-proof-key: true
+            token:
+              access-token-time-to-live: "30m"
+              access-token-format: "self-contained"
+
+server:
+  port: 9000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.security: DEBUG
