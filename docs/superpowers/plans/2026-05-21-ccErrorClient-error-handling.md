@@ -994,3 +994,45 @@ git commit -m "ccErrorClient: end-to-end MockWebServer tests for token + resourc
 **Known fragilities:**
 - `AuthorizedClientServiceOAuth2AuthorizedClientManager` uses a principal-name internally; the `resetState` clears two candidates (`errorClient`, `anonymousUser`). If neither matches at runtime, second test in a class may reuse a cached token and the second-token-related test could see an unexpected enqueued response replay. Mitigation if hit: add `authorizedClientService.removeAuthorizedClient(...)` for the actually-observed principal name, or re-create the application context per test (`@DirtiesContext`).
 - `ClientAuthorizationException` constructor signatures vary across Spring Security versions; the test helpers use the public 4-arg `(OAuth2Error, clientRegistrationId, message, cause)` constructor available in Spring Security 6+. If the compile fails on this signature under Boot 4.0.6's Security version, adjust to whichever public constructor is available.
+
+---
+
+## Execution Deviations (filled in after the fact)
+
+This section records the corrections applied during execution. Re-read this BEFORE re-executing the plan from scratch on a fresh repo.
+
+**Spring Boot 4.0.6 / Spring Security 7 reality checks:**
+
+1. **`mockwebserver` is NOT BOM-managed** — explicit `<version>4.12.0</version>` is required in the test dep.
+2. **`ClientRegistrationException` does not exist in Spring Security 7** — handler catches `IllegalArgumentException` whose `message` contains the substring `"ClientRegistration"` (the actual message Spring `Assert.notNull` throws). Test fakes it with the same pattern.
+3. **`JdkClientHttpRequestFactory#setConnectTimeout` does not exist** — connect timeout must be applied via the underlying `java.net.http.HttpClient.newBuilder().connectTimeout(...)`, then passed to `new JdkClientHttpRequestFactory(httpClient)`. Read timeout still uses `setReadTimeout(...)`.
+4. **Bare token RestClient is unusable** — must register `OAuth2AccessTokenResponseHttpMessageConverter` via `configureMessageConverters(builder -> builder.disableDefaults().addCustomConverter(new OAuth2AccessTokenResponseHttpMessageConverter()))` AND `defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())`. Without both you get `accessToken cannot be null` or the OAuth2 error body is silently dropped (status becomes a generic `HttpClientErrorException` that loses the OAuth error code).
+5. **Avoid `messageConverters(Consumer)` and `setRestClient(...)` deprecation traps** — `messageConverters(Consumer)` is `@Deprecated(forRemoval=true)` in Spring 7. Use `configureMessageConverters(...)` instead.
+6. **JDK HTTP client throws `java.net.http.HttpTimeoutException`, NOT `java.net.SocketTimeoutException`** on read timeout. Handler must accept both (and tests must cover both flavors). This applies to both TOKEN and RESOURCE timeout branches.
+7. **TOKEN stage gained a `TOKEN_ENDPOINT_TIMEOUT` ErrorCode** — original plan collapsed timeout and ConnectException into `TOKEN_ENDPOINT_UNREACHABLE`. Spec §4 was updated to split them (mirrors the RESOURCE stage's UNREACHABLE/TIMEOUT distinction).
+8. **`ClientFlowException` is routed through handler** — `classify()` checks `ClientFlowException cfe` FIRST and returns `cfe.errorCode()` directly. Without this branch, any deliberate `throw new ClientFlowException(ErrorCode.X, ...)` falls through to `INTERNAL_UNEXPECTED` (500).
+9. **Layer 2 test must use HTTP 400 (not 401) when faking AS `invalid_client`** — Spring Security's `OAuth2ErrorResponseErrorHandler` only parses the OAuth2 error body on HTTP 400; a 401 produces `HttpClientErrorException.Unauthorized` instead of `ClientAuthorizationException` and the test would assert the wrong code. RFC 6749 §5.2 allows 400 for `invalid_client`.
+10. **Spring Boot 4 ships Jackson 3** — import `tools.jackson.databind.ObjectMapper`, not `com.fasterxml.jackson.databind.ObjectMapper`.
+
+**Final test counts (after deviations applied):**
+- Layer 1 (`GlobalExceptionHandlerTest`): 24 case (4 INPUT + 8 TOKEN + 10 RESOURCE + 1 UNKNOWN fallback + 1 `ClientFlowException` passthrough)
+- Layer 2 (`UpdateParameterClientFlowTest`): 6 case
+- `ErrorClientApplicationTests.contextLoads`: 1 case
+- Total: 31
+
+**Commit history (`main..feat/ccErrorClient-error-handling`):**
+
+```
+1abeee4  ccErrorClient: route ClientFlowException; split TOKEN timeout from unreachable; wire connect timeout
+5b514be  ccErrorClient: cover HttpTimeoutException in unit tests; assert stage in timeout flow tests
+0e3be6f  ccErrorClient: replace deprecated messageConverters with configureMessageConverters
+e48686d  ccErrorClient: end-to-end MockWebServer tests for token + resource flows
+6503bff  ccErrorClient: handler test covers UNKNOWN fallback
+e657daa  ccErrorClient: handler maps RESOURCE-stage exceptions
+761a3ac  ccErrorClient: handler maps TOKEN-stage exceptions
+f00939d  ccErrorClient: handler maps INPUT-stage exceptions
+296857e  ccErrorClient: add error data structures (ErrorStage, ErrorCode, ErrorResponse, ClientFlowException)
+bb1b392  ccErrorClient: add mockwebserver dep and short RestClient/token timeouts
+1fff5cc  build: register ccErrorClient module in root pom
+d2d2dd3  ccErrorClient: import baseline module (controller, config, app skeleton)
+```

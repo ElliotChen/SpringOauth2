@@ -62,6 +62,7 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
 
 | Stage | Java Exception | 條件 / 子判斷 | ErrorCode | HTTP out |
 |---|---|---|---|---|
+| —（透傳）| `ClientFlowException` | handler 直接取 `cfe.errorCode()` 回傳 | （載運的任意 ErrorCode） | （依載運） |
 | INPUT | `MissingServletRequestParameterException` | — | `INPUT_MISSING_PARAMETER` | 400 |
 | INPUT | `MethodArgumentTypeMismatchException` | — | `INPUT_PARAMETER_TYPE_MISMATCH` | 400 |
 | INPUT | `HttpRequestMethodNotSupportedException` | — | `INPUT_METHOD_NOT_ALLOWED` | 405 |
@@ -69,10 +70,10 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
 | TOKEN | `ClientAuthorizationException` | `getError().getErrorCode() == "invalid_client"` | `TOKEN_INVALID_CLIENT` | 502 |
 | TOKEN | `ClientAuthorizationException` | `"invalid_scope"` | `TOKEN_INVALID_SCOPE` | 502 |
 | TOKEN | `ClientAuthorizationException` | `"unauthorized_client"` | `TOKEN_UNAUTHORIZED_CLIENT` | 502 |
-| TOKEN | `ClientAuthorizationException` | cause 為 `ResourceAccessException` 且 root cause 為 `ConnectException` | `TOKEN_ENDPOINT_UNREACHABLE` | 504 |
-| TOKEN | `ClientAuthorizationException` | cause 為 `ResourceAccessException` 且 root cause 為 `SocketTimeoutException` | `TOKEN_ENDPOINT_UNREACHABLE` | 504 |
+| TOKEN | `ClientAuthorizationException` | root cause 為 `ConnectException` | `TOKEN_ENDPOINT_UNREACHABLE` | 504 |
+| TOKEN | `ClientAuthorizationException` | root cause 為 `SocketTimeoutException` / `java.net.http.HttpTimeoutException` | `TOKEN_ENDPOINT_TIMEOUT` | 504 |
 | TOKEN | `ClientAuthorizationException` | 其他（含 5xx、未分類 OAuth error code） | `TOKEN_SERVER_ERROR` | 502 |
-| TOKEN | `ClientRegistrationException` | — | `TOKEN_REGISTRATION_NOT_FOUND` | 500 |
+| TOKEN | `IllegalArgumentException` | `message` 含 `"ClientRegistration"`（Spring Security 7 已移除 `ClientRegistrationException`） | `TOKEN_REGISTRATION_NOT_FOUND` | 500 |
 | RESOURCE | `HttpClientErrorException.Unauthorized` (401) | — | `RESOURCE_UNAUTHORIZED` | 502 |
 | RESOURCE | `HttpClientErrorException.Forbidden` (403) | — | `RESOURCE_FORBIDDEN` | 502 |
 | RESOURCE | `HttpClientErrorException.BadRequest` (400) | — | `RESOURCE_BAD_REQUEST` | 502 |
@@ -80,8 +81,8 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
 | RESOURCE | 其他 `HttpClientErrorException` (4xx) | — | `RESOURCE_CLIENT_ERROR` | 502 |
 | RESOURCE | `HttpServerErrorException` (5xx) | — | `RESOURCE_SERVER_ERROR` | 502 |
 | RESOURCE | `ResourceAccessException` | root cause 為 `ConnectException` | `RESOURCE_UNREACHABLE` | 504 |
-| RESOURCE | `ResourceAccessException` | root cause 為 `SocketTimeoutException` | `RESOURCE_TIMEOUT` | 504 |
-| RESOURCE | `RestClientResponseException` / `HttpMessageNotReadableException`（非 INPUT 來源） | — | `RESOURCE_MALFORMED_RESPONSE` | 502 |
+| RESOURCE | `ResourceAccessException` | root cause 為 `SocketTimeoutException` / `java.net.http.HttpTimeoutException` | `RESOURCE_TIMEOUT` | 504 |
+| RESOURCE | `UnknownContentTypeException` / `RestClientResponseException` / `HttpMessageNotReadableException`（非 INPUT 來源） | — | `RESOURCE_MALFORMED_RESPONSE` | 502 |
 | UNKNOWN | `Exception`（fallback） | — | `INTERNAL_UNEXPECTED` | 500 |
 
 ### 設計取捨
@@ -90,6 +91,9 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
    理由：caller 並未直接跟 ccOauthServer / ccResourceServer 互動，上游 status 對它無語意。`stage` + `code` 仍可區分根因。
 2. **`ClientAuthorizationException` 細分依賴字串比對**：`invalid_client` / `invalid_scope` / `unauthorized_client` 為 OAuth2 (RFC 6749) 規範定義，穩定可比對。
 3. **`HttpMessageNotReadableException` 一律歸 RESOURCE**：controller 使用 `@RequestParam`（非 `@RequestBody`），因此 INPUT 層不會產生此例外。若未來 controller 增加 `@RequestBody` 入口需重新評估。
+4. **TOKEN 階段區分 UNREACHABLE vs TIMEOUT**：和 RESOURCE 階段對稱。on-call 透過 `code` 即可分辨「AS 沒起」vs「AS 慢」。
+5. **JDK HTTP client 的 timeout 例外型別**：實際使用 `JdkClientHttpRequestFactory` 時，read timeout 會丟 `java.net.http.HttpTimeoutException`（不是 `SocketTimeoutException`）。handler 對兩者都接受，以容納未來換 request factory 的可能性。
+6. **`ClientRegistrationException` 替代方案**：Spring Security 7 已移除此型別，改用 `IllegalArgumentException` + message 子字串 `"ClientRegistration"` 比對。比對來源是 Spring Security 內部 `Assert.notNull("Could not find ClientRegistration with id ...")`。脆弱但目前是唯一可行的對應。
 
 ## 5. 測試策略
 
@@ -100,7 +104,7 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
 - **檔案**：`tw.elliot.errorclient.error.GlobalExceptionHandlerTest`
 - **形式**：純 JUnit，不啟動 Spring context。
 - **做法**：`@ParameterizedTest` + `MethodSource`，造出第 4 節表格每一列對應的 exception 實例，呼叫 handler，斷言回傳的 `ErrorResponse` 的 `code / stage / httpStatus`。
-- **覆蓋**：表格全部 21 列（INPUT 4 + TOKEN 7 + RESOURCE 9 + UNKNOWN 1）。
+- **覆蓋**：表格全部分支（INPUT 4 + TOKEN 8 + RESOURCE 10 + UNKNOWN 1 + `ClientFlowException` 1 = 24 case）。
 - **價值**：每新增一個 `ErrorCode` 必加一行測試；對應表的「規格」即此測試。
 
 ### Layer 2 — 端到端串接測試
@@ -116,8 +120,8 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
   |---|---|---|---|
   | happy path | 200 + access_token | 200 + `{"code":0,...}` | 200，body 透傳 |
   | INPUT 缺參數 | — | — | 400 `INPUT_MISSING_PARAMETER` |
-  | TOKEN invalid_client | 401 `{"error":"invalid_client"}` | — | 502 `TOKEN_INVALID_CLIENT` |
-  | TOKEN timeout | `SocketPolicy.NO_RESPONSE` | — | 504 `TOKEN_ENDPOINT_UNREACHABLE` |
+  | TOKEN invalid_client | **400** `{"error":"invalid_client"}`（Spring Security 的 `OAuth2ErrorResponseErrorHandler` 只在 HTTP 400 解析 OAuth2 error body；RFC 6749 §5.2 允許 400） | — | 502 `TOKEN_INVALID_CLIENT` |
+  | TOKEN timeout | `SocketPolicy.NO_RESPONSE` | — | 504 `TOKEN_ENDPOINT_TIMEOUT` |
   | RESOURCE 401 | 200 + token | 401 | 502 `RESOURCE_UNAUTHORIZED` |
   | RESOURCE timeout | 200 + token | `SocketPolicy.NO_RESPONSE` | 504 `RESOURCE_TIMEOUT` |
 
@@ -129,9 +133,11 @@ ccErrorClient/src/main/java/tw/elliot/errorclient/
 ## 6. 工作項目（給後續 plan）
 
 1. 新增 `error/` 套件下五個檔案（`ErrorStage`、`ErrorCode`、`ErrorResponse`、`ClientFlowException`、`GlobalExceptionHandler`）。
-2. `RestClientConfig` 增加 connect / read timeout。
-3. `pom.xml` 增加 `mockwebserver` test dependency。
-4. 撰寫 `GlobalExceptionHandlerTest`（Layer 1，21 case）。
+2. `RestClientConfig`：
+   - connect timeout 透過 `java.net.http.HttpClient.newBuilder().connectTimeout(...)` 設定後傳入 `JdkClientHttpRequestFactory`（`JdkClientHttpRequestFactory` 本身沒有 connect timeout setter）；read timeout 用 `setReadTimeout`。
+   - 為 token RestClient 顯式註冊 `OAuth2AccessTokenResponseHttpMessageConverter` 與 `OAuth2ErrorResponseErrorHandler`（用 `configureMessageConverters(...).disableDefaults().addCustomConverter(...)` + `defaultStatusHandler(...)`）；少了這兩者，bare RestClient 會丟 `accessToken cannot be null` 或無法解析 OAuth2 error body。
+3. `pom.xml` 增加 `mockwebserver` test dependency。**Spring Boot 4.0.6 BOM 未管理此 artifact，需顯式指定 `<version>4.12.0</version>`。**
+4. 撰寫 `GlobalExceptionHandlerTest`（Layer 1，24 case）。
 5. 撰寫 `UpdateParameterClientFlowTest`（Layer 2，6 case）。
 
 ## 7. 非目標
