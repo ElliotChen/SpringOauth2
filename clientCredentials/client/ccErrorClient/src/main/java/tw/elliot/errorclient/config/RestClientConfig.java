@@ -1,5 +1,6 @@
 package tw.elliot.errorclient.config;
 
+import java.net.http.HttpClient;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,9 +28,12 @@ public class RestClientConfig {
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(2);
 
     private static ClientHttpRequestFactory timeoutFactory() {
-        JdkClientHttpRequestFactory f = new JdkClientHttpRequestFactory();
-        f.setReadTimeout(READ_TIMEOUT);
-        return f;
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT)
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(READ_TIMEOUT);
+        return factory;
     }
 
     @Bean

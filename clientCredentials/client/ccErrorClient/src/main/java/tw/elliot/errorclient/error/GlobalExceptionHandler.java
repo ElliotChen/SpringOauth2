@@ -27,6 +27,7 @@ public class GlobalExceptionHandler {
     }
 
     private ErrorCode classify(Exception ex) {
+        if (ex instanceof ClientFlowException cfe)                 return cfe.errorCode();
         if (ex instanceof MissingServletRequestParameterException) return ErrorCode.INPUT_MISSING_PARAMETER;
         if (ex instanceof MethodArgumentTypeMismatchException)     return ErrorCode.INPUT_PARAMETER_TYPE_MISMATCH;
         if (ex instanceof HttpRequestMethodNotSupportedException)  return ErrorCode.INPUT_METHOD_NOT_ALLOWED;
@@ -68,10 +69,12 @@ public class GlobalExceptionHandler {
 
     private ErrorCode classifyTokenError(ClientAuthorizationException ex) {
         Throwable root = rootCause(ex);
-        if (root instanceof java.net.ConnectException
-                || root instanceof java.net.SocketTimeoutException
-                || root instanceof java.net.http.HttpTimeoutException) {
+        if (root instanceof java.net.ConnectException) {
             return ErrorCode.TOKEN_ENDPOINT_UNREACHABLE;
+        }
+        if (root instanceof java.net.SocketTimeoutException
+                || root instanceof java.net.http.HttpTimeoutException) {
+            return ErrorCode.TOKEN_ENDPOINT_TIMEOUT;
         }
         String oauthCode = ex.getError() == null ? "" : ex.getError().getErrorCode();
         return switch (oauthCode) {

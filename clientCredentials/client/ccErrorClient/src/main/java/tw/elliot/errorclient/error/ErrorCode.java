@@ -20,6 +20,8 @@ public enum ErrorCode {
             "取得 token 失敗：unauthorized_client"),
     TOKEN_ENDPOINT_UNREACHABLE(ErrorStage.TOKEN, HttpStatus.GATEWAY_TIMEOUT,
             "無法連線到 token endpoint"),
+    TOKEN_ENDPOINT_TIMEOUT(ErrorStage.TOKEN, HttpStatus.GATEWAY_TIMEOUT,
+            "token endpoint 回應逾時"),
     TOKEN_SERVER_ERROR(ErrorStage.TOKEN, HttpStatus.BAD_GATEWAY,
             "token endpoint 回應錯誤"),
     TOKEN_REGISTRATION_NOT_FOUND(ErrorStage.TOKEN, HttpStatus.INTERNAL_SERVER_ERROR,

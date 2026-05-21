@@ -87,10 +87,10 @@ class GlobalExceptionHandlerTest {
                         ErrorCode.TOKEN_ENDPOINT_UNREACHABLE),
                 Arguments.of(
                         clientAuthExWithCause(new ResourceAccessException("io", new SocketTimeoutException("timeout"))),
-                        ErrorCode.TOKEN_ENDPOINT_UNREACHABLE),
+                        ErrorCode.TOKEN_ENDPOINT_TIMEOUT),
                 Arguments.of(
                         clientAuthExWithCause(new ResourceAccessException("io", new HttpTimeoutException("http timeout"))),
-                        ErrorCode.TOKEN_ENDPOINT_UNREACHABLE),
+                        ErrorCode.TOKEN_ENDPOINT_TIMEOUT),
                 Arguments.of(clientAuthEx("server_error"),         ErrorCode.TOKEN_SERVER_ERROR),
                 Arguments.of(
                         new IllegalArgumentException("No ClientRegistration with id: nope"),
@@ -164,5 +164,15 @@ class GlobalExceptionHandlerTest {
         assertThat(resp.getStatusCode().value()).isEqualTo(500);
         assertThat(resp.getBody().code()).isEqualTo(ErrorCode.INTERNAL_UNEXPECTED.name());
         assertThat(resp.getBody().stage()).isEqualTo(ErrorStage.UNKNOWN);
+    }
+
+    @org.junit.jupiter.api.Test
+    void clientFlowExceptionUsesCarriedErrorCode() {
+        ResponseEntity<ErrorResponse> resp = handler.handle(
+                new ClientFlowException(ErrorCode.RESOURCE_FORBIDDEN, "denied"), req());
+        assertThat(resp.getStatusCode().value()).isEqualTo(502);
+        assertThat(resp.getBody()).isNotNull();
+        assertThat(resp.getBody().code()).isEqualTo(ErrorCode.RESOURCE_FORBIDDEN.name());
+        assertThat(resp.getBody().stage()).isEqualTo(ErrorStage.RESOURCE);
     }
 }
