@@ -3,15 +3,16 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>tw.elliot</groupId>
-  <artifactId>oauth</artifactId>
+  <artifactId>SpringOauth2</artifactId>
   <version>revision</version>
   <packaging>pom</packaging>
-  <name>oauth</name>
+  <name>SpringOauth2</name>
   <modules>
     <module>parent</module>
     <module>clientCredentials/server/ccOauthServer</module>
     <module>clientCredentials/server/ccResourceServer</module>
     <module>clientCredentials/client/ccResourceClient</module>
+    <module>clientCredentials/client/ccErrorClient</module>
     <module>pkce/server/pkceOauthServer</module>
     <module>pkce/server/pkceResourceServer</module>
     <module>pkce/client/pkceResourceClient</module>
