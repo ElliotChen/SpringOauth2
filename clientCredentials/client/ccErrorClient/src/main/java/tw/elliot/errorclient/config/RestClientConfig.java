@@ -14,8 +14,10 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.client.OAuth2ClientHttpRequestInterceptor;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -33,8 +35,15 @@ public class RestClientConfig {
     @Bean
     public OAuth2AccessTokenResponseClient<OAuth2ClientCredentialsGrantRequest>
             clientCredentialsTokenResponseClient() {
+        // Build a RestClient that includes both the OAuth2 message converter (required
+        // to deserialize OAuth2AccessTokenResponse) and our timeout factory.
         RestClient tokenRestClient = RestClient.builder()
                 .requestFactory(timeoutFactory())
+                .messageConverters(converters -> {
+                    converters.removeIf(c -> c instanceof org.springframework.http.converter.json.MappingJackson2HttpMessageConverter);
+                    converters.add(0, new OAuth2AccessTokenResponseHttpMessageConverter());
+                })
+                .defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
                 .build();
         RestClientClientCredentialsTokenResponseClient client =
                 new RestClientClientCredentialsTokenResponseClient();

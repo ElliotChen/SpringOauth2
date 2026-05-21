@@ -41,7 +41,10 @@ public class GlobalExceptionHandler {
 
         if (ex instanceof ResourceAccessException rae) {
             Throwable root = rootCause(rae);
-            if (root instanceof java.net.SocketTimeoutException) return ErrorCode.RESOURCE_TIMEOUT;
+            if (root instanceof java.net.SocketTimeoutException
+                    || root instanceof java.net.http.HttpTimeoutException) {
+                return ErrorCode.RESOURCE_TIMEOUT;
+            }
             return ErrorCode.RESOURCE_UNREACHABLE;
         }
         if (ex instanceof HttpClientErrorException hcee) {
@@ -66,7 +69,8 @@ public class GlobalExceptionHandler {
     private ErrorCode classifyTokenError(ClientAuthorizationException ex) {
         Throwable root = rootCause(ex);
         if (root instanceof java.net.ConnectException
-                || root instanceof java.net.SocketTimeoutException) {
+                || root instanceof java.net.SocketTimeoutException
+                || root instanceof java.net.http.HttpTimeoutException) {
             return ErrorCode.TOKEN_ENDPOINT_UNREACHABLE;
         }
         String oauthCode = ex.getError() == null ? "" : ex.getError().getErrorCode();
