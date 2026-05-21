@@ -39,10 +39,9 @@ public class RestClientConfig {
         // to deserialize OAuth2AccessTokenResponse) and our timeout factory.
         RestClient tokenRestClient = RestClient.builder()
                 .requestFactory(timeoutFactory())
-                .messageConverters(converters -> {
-                    converters.removeIf(c -> c instanceof org.springframework.http.converter.json.MappingJackson2HttpMessageConverter);
-                    converters.add(0, new OAuth2AccessTokenResponseHttpMessageConverter());
-                })
+                .configureMessageConverters(builder -> builder
+                        .disableDefaults()
+                        .addCustomConverter(new OAuth2AccessTokenResponseHttpMessageConverter()))
                 .defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
                 .build();
         RestClientClientCredentialsTokenResponseClient client =
