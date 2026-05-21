@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: "errorClient"
+  security:
+    oauth2:
+      client:
+        registration:
+          resource-server:
+            client-id: "admin-client"
+            client-secret: "admin-secret"
+            authorization-grant-type: "client_credentials"
+            scope: "admin"
+        provider:
+          resource-server:
+            token-uri: "http://localhost:9000/oauth2/token"
+
+server:
+  port: 8080
+
+app:
+  resource-server:
+    base-url: "http://localhost:8081"
+
+logging:
+  level:
+    org.springframework.security: INFO
