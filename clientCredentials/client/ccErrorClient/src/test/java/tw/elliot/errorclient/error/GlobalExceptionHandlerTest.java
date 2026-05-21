@@ -150,4 +150,12 @@ class GlobalExceptionHandlerTest {
         assertThat(resp.getBody().code()).isEqualTo(expected.name());
         assertThat(resp.getBody().stage()).isEqualTo(ErrorStage.RESOURCE);
     }
+
+    @org.junit.jupiter.api.Test
+    void fallsBackToInternalUnexpectedForUnknownException() {
+        ResponseEntity<ErrorResponse> resp = handler.handle(new IllegalStateException("boom"), req());
+        assertThat(resp.getStatusCode().value()).isEqualTo(500);
+        assertThat(resp.getBody().code()).isEqualTo(ErrorCode.INTERNAL_UNEXPECTED.name());
+        assertThat(resp.getBody().stage()).isEqualTo(ErrorStage.UNKNOWN);
+    }
 }
