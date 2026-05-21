@@ -37,6 +37,24 @@
             <goals>
               <goal>repackage</goal>
             </goals>
+            <configuration>
+              <!-- Keep the plain jar as the main artifact so Failsafe's test
+                   classpath can still locate @SpringBootApplication classes.
+                   The executable (fat) jar is published with classifier "exec". -->
+              <classifier>exec</classifier>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

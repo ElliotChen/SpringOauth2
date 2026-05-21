@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>tw.elliot</groupId>
+    <artifactId>parent</artifactId>
+    <version>revision</version>
+    <relativePath>../../../parent</relativePath>
+  </parent>
+  <artifactId>ccProductionClient</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>ccProductionClient</name>
+  <description>Production-grade error handling demo for client_credentials flow.</description>
+
+  <properties>
+    <resilience4j.version>2.3.0</resilience4j.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-client</artifactId>
+    </dependency>
+
+    <!-- Actuator: exposes /actuator/metrics, /actuator/health, etc. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!-- Spring Boot 4's first-party OpenTelemetry starter.
+         Bundles OTel SDK + Micrometer Tracing bridge + OTLP exporter.
+         OTLP export is disabled in application.yaml (no local collector);
+         the starter still injects traceId/spanId into MDC for logs. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-opentelemetry</artifactId>
+    </dependency>
+
+    <!-- Resilience4j (programmatic API, no spring-boot autoconfig to avoid Boot 4 surprises) -->
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-circuitbreaker</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-retry</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-micrometer</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>3.9.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

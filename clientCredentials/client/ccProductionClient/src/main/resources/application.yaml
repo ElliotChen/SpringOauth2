@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: "productionClient"
+  security:
+    oauth2:
+      client:
+        registration:
+          resource-server:
+            client-id: "admin-client"
+            client-secret: "admin-secret"
+            authorization-grant-type: "client_credentials"
+            scope: "admin"
+        provider:
+          resource-server:
+            token-uri: "http://localhost:9000/oauth2/token"
+
+server:
+  port: 8080
+
+app:
+  resource-server:
+    base-url: "http://localhost:8081"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics"
+  # OpenTelemetry: instrumentation runs (traceId/spanId injected into MDC),
+  # but OTLP export is OFF — no local collector required in dev/test.
+  # To export, flip the two enabled flags below and set the endpoints under
+  # management.opentelemetry.tracing.export.otlp.endpoint /
+  # management.otlp.metrics.export.url.
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    # Surface MDC traceId in every log line so cross-service tracing has a hook.
+    level: "%5p [%X{traceId:-}]"

@@ -13,6 +13,7 @@
     <module>clientCredentials/server/ccResourceServer</module>
     <module>clientCredentials/client/ccResourceClient</module>
     <module>clientCredentials/client/ccErrorClient</module>
+    <module>clientCredentials/client/ccProductionClient</module>
     <module>pkce/server/pkceOauthServer</module>
     <module>pkce/server/pkceResourceServer</module>
     <module>pkce/client/pkceResourceClient</module>

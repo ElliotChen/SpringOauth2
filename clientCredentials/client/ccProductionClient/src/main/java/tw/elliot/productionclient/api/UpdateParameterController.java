@@ -1,4 +1,4 @@
-package tw.elliot.errorclient.api;
+package tw.elliot.productionclient.api;
 
 import java.util.Map;
 import org.springframework.http.MediaType;
@@ -6,15 +6,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import tw.elliot.errorclient.service.UpdateParameterService;
+import tw.elliot.productionclient.service.UpdateParameterService;
 
 @RestController
 @RequestMapping("/client")
-public class UpdateParameterClientController {
+public class UpdateParameterController {
 
     private final UpdateParameterService service;
 
-    public UpdateParameterClientController(UpdateParameterService service) {
+    public UpdateParameterController(UpdateParameterService service) {
         this.service = service;
     }
 

@@ -26,7 +26,7 @@ import tw.elliot.errorclient.error.ErrorCode;
 import tw.elliot.errorclient.error.ErrorStage;
 
 @SpringBootTest
-class UpdateParameterClientFlowTest {
+class UpdateParameterClientFlowMockWebServerIT {
 
     private static MockWebServer authServer;
     private static MockWebServer resourceServer;
