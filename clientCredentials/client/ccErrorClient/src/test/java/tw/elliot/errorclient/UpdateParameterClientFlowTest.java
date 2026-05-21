@@ -141,6 +141,7 @@ class UpdateParameterClientFlowTest {
         assertThat(result.getResponse().getStatus()).isEqualTo(504);
         Map<?, ?> body = json.readValue(result.getResponse().getContentAsString(), Map.class);
         assertThat(body.get("code")).isEqualTo(ErrorCode.TOKEN_ENDPOINT_UNREACHABLE.name());
+        assertThat(body.get("stage")).isEqualTo(ErrorStage.TOKEN.name());
     }
 
     // ── Step 3: RESOURCE scenarios ────────────────────────────────────────────
@@ -174,5 +175,6 @@ class UpdateParameterClientFlowTest {
         assertThat(result.getResponse().getStatus()).isEqualTo(504);
         Map<?, ?> body = json.readValue(result.getResponse().getContentAsString(), Map.class);
         assertThat(body.get("code")).isEqualTo(ErrorCode.RESOURCE_TIMEOUT.name());
+        assertThat(body.get("stage")).isEqualTo(ErrorStage.RESOURCE.name());
     }
 }

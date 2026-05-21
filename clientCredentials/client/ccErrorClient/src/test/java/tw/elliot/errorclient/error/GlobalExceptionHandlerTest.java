@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -87,6 +88,9 @@ class GlobalExceptionHandlerTest {
                 Arguments.of(
                         clientAuthExWithCause(new ResourceAccessException("io", new SocketTimeoutException("timeout"))),
                         ErrorCode.TOKEN_ENDPOINT_UNREACHABLE),
+                Arguments.of(
+                        clientAuthExWithCause(new ResourceAccessException("io", new HttpTimeoutException("http timeout"))),
+                        ErrorCode.TOKEN_ENDPOINT_UNREACHABLE),
                 Arguments.of(clientAuthEx("server_error"),         ErrorCode.TOKEN_SERVER_ERROR),
                 Arguments.of(
                         new IllegalArgumentException("No ClientRegistration with id: nope"),
@@ -134,6 +138,9 @@ class GlobalExceptionHandlerTest {
                         ErrorCode.RESOURCE_UNREACHABLE),
                 Arguments.of(
                         new ResourceAccessException("io", new SocketTimeoutException("timeout")),
+                        ErrorCode.RESOURCE_TIMEOUT),
+                Arguments.of(
+                        new ResourceAccessException("io", new HttpTimeoutException("http timeout")),
                         ErrorCode.RESOURCE_TIMEOUT),
                 Arguments.of(
                         new UnknownContentTypeException(String.class, MediaType.APPLICATION_OCTET_STREAM,
