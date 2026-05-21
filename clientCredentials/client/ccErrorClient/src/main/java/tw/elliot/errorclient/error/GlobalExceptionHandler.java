@@ -2,12 +2,18 @@ package tw.elliot.errorclient.error;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.oauth2.client.ClientAuthorizationException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
@@ -32,6 +38,27 @@ public class GlobalExceptionHandler {
             return ErrorCode.TOKEN_REGISTRATION_NOT_FOUND;
         }
         if (ex instanceof ClientAuthorizationException cae)        return classifyTokenError(cae);
+
+        if (ex instanceof ResourceAccessException rae) {
+            Throwable root = rootCause(rae);
+            if (root instanceof java.net.SocketTimeoutException) return ErrorCode.RESOURCE_TIMEOUT;
+            return ErrorCode.RESOURCE_UNREACHABLE;
+        }
+        if (ex instanceof HttpClientErrorException hcee) {
+            return switch (hcee.getStatusCode().value()) {
+                case 401 -> ErrorCode.RESOURCE_UNAUTHORIZED;
+                case 403 -> ErrorCode.RESOURCE_FORBIDDEN;
+                case 400 -> ErrorCode.RESOURCE_BAD_REQUEST;
+                case 404 -> ErrorCode.RESOURCE_NOT_FOUND;
+                default  -> ErrorCode.RESOURCE_CLIENT_ERROR;
+            };
+        }
+        if (ex instanceof HttpServerErrorException)           return ErrorCode.RESOURCE_SERVER_ERROR;
+        if (ex instanceof UnknownContentTypeException
+                || ex instanceof RestClientResponseException
+                || ex instanceof HttpMessageNotReadableException) {
+            return ErrorCode.RESOURCE_MALFORMED_RESPONSE;
+        }
 
         return ErrorCode.INTERNAL_UNEXPECTED;
     }

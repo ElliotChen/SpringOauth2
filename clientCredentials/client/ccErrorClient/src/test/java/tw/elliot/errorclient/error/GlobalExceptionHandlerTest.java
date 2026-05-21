@@ -11,13 +11,18 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.ClientAuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 class GlobalExceptionHandlerTest {
@@ -96,5 +101,53 @@ class GlobalExceptionHandlerTest {
         assertThat(resp.getStatusCode().value()).isEqualTo(expected.httpStatus().value());
         assertThat(resp.getBody().code()).isEqualTo(expected.name());
         assertThat(resp.getBody().stage()).isEqualTo(ErrorStage.TOKEN);
+    }
+
+    static Stream<Arguments> resourceCases() {
+        return Stream.of(
+                Arguments.of(
+                        HttpClientErrorException.create(HttpStatus.UNAUTHORIZED,
+                                "Unauthorized", HttpHeaders.EMPTY, new byte[0], null),
+                        ErrorCode.RESOURCE_UNAUTHORIZED),
+                Arguments.of(
+                        HttpClientErrorException.create(HttpStatus.FORBIDDEN,
+                                "Forbidden", HttpHeaders.EMPTY, new byte[0], null),
+                        ErrorCode.RESOURCE_FORBIDDEN),
+                Arguments.of(
+                        HttpClientErrorException.create(HttpStatus.BAD_REQUEST,
+                                "Bad Request", HttpHeaders.EMPTY, new byte[0], null),
+                        ErrorCode.RESOURCE_BAD_REQUEST),
+                Arguments.of(
+                        HttpClientErrorException.create(HttpStatus.NOT_FOUND,
+                                "Not Found", HttpHeaders.EMPTY, new byte[0], null),
+                        ErrorCode.RESOURCE_NOT_FOUND),
+                Arguments.of(
+                        HttpClientErrorException.create(HttpStatus.CONFLICT,
+                                "Conflict", HttpHeaders.EMPTY, new byte[0], null),
+                        ErrorCode.RESOURCE_CLIENT_ERROR),
+                Arguments.of(
+                        HttpServerErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR,
+                                "Server", HttpHeaders.EMPTY, new byte[0], null),
+                        ErrorCode.RESOURCE_SERVER_ERROR),
+                Arguments.of(
+                        new ResourceAccessException("io", new ConnectException("refused")),
+                        ErrorCode.RESOURCE_UNREACHABLE),
+                Arguments.of(
+                        new ResourceAccessException("io", new SocketTimeoutException("timeout")),
+                        ErrorCode.RESOURCE_TIMEOUT),
+                Arguments.of(
+                        new UnknownContentTypeException(String.class, MediaType.APPLICATION_OCTET_STREAM,
+                                200, "OK", HttpHeaders.EMPTY, new byte[0]),
+                        ErrorCode.RESOURCE_MALFORMED_RESPONSE)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("resourceCases")
+    void mapsResourceExceptions(Exception ex, ErrorCode expected) {
+        ResponseEntity<ErrorResponse> resp = handler.handle(ex, req());
+        assertThat(resp.getStatusCode().value()).isEqualTo(expected.httpStatus().value());
+        assertThat(resp.getBody().code()).isEqualTo(expected.name());
+        assertThat(resp.getBody().stage()).isEqualTo(ErrorStage.RESOURCE);
     }
 }
